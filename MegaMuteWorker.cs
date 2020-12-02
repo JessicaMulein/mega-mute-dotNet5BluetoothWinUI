@@ -7,14 +7,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MegaMute
 {
-    public class Worker : BackgroundService
+    public class MegaMuteWorker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<MegaMuteWorker> _logger;
 
         private DateTimeOffset _portOpenTime;
         private DateTimeOffset _timeZero = DateTimeOffset.UnixEpoch;
@@ -26,9 +27,10 @@ namespace MegaMute
         public SerialPort SerialPort { get; }
 
         private byte[] _buffer;
+        public MuteStatus MuteStatus { get; internal set; }
 
 
-        public Worker(IConfiguration configuration, ILogger<Worker> logger)
+        public MegaMuteWorker(IConfiguration configuration, ILogger<MegaMuteWorker> logger)
         {
             _buffer = new byte[] { };
             _logger = logger;
@@ -151,6 +153,8 @@ namespace MegaMute
                         if (tmpLines[highestProcessed].Contains("\"c\":"))
                         {
                             ResponseRoot responseRoot = parseResponse(tmpLines[highestProcessed]);
+                            this.MuteStatus = responseRoot.toMuteStatus();
+                            _logger.LogInformation(message: "status: " + this.MuteStatus.ToString());
                             if (_timeZero.Equals(DateTimeOffset.UnixEpoch))
                             {
                                 _megaMuteTimeOffset = responseRoot.t;
@@ -158,7 +162,6 @@ namespace MegaMute
                             }
                             if (responseRoot.c == 1) _logger.LogInformation(message: "CHANGE status update at millis since power on {t}", responseRoot.t);
                             else _logger.LogInformation(message: "interval push status update at millis since power on {t}", responseRoot.t);
-                            _logger.LogInformation(message: "status: " + responseRoot.toMuteStatus().ToString());
                         }
                         else if (tmpLines[highestProcessed].Contains("\"command\":"))
                         {
@@ -193,7 +196,7 @@ namespace MegaMute
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                // _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                // _logger.LogInformation("MegaMuteWorker running at: {time}", DateTimeOffset.Now);
                 await Task.Delay(1000, stoppingToken);
             }
         }

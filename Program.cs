@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Runtime.CompilerServices;
 
 namespace MegaMute
 {
@@ -16,7 +17,7 @@ namespace MegaMute
                 .UseWindowsService()
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHostedService<Worker>();
+                    services.AddHostedService<MegaMuteWorker>();
                 });
     }
 }
