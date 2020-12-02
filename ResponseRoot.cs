@@ -35,5 +35,15 @@ namespace MegaMute
             }
 
         }
+
+        public PowerStatus toPowerStatus()
+        {
+            foreach (ResponseState responseState in this.s)
+            {
+                if ((responseState.p == 0) && (responseState.v == 1)) return PowerStatus.Good;
+                else if ((responseState.p == 0) && (responseState.v == 0)) return PowerStatus.OnlineBad;
+            }
+            return PowerStatus.Unknown;
+        }
     }
 }
